@@ -30,3 +30,6 @@ lint-pyright = "pyright ."
 lint-mypy = "mypy ."
 lint.sequence = ["lint-ruff", "lint-ruff-format", "lint-pyright", "lint-mypy"]
 lint.ignore_fail = "return_non_zero"
+
+[tool.pyright]
+reportMissingModuleSource = false

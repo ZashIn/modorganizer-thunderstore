@@ -8,7 +8,7 @@ from dataclasses import (
 from pathlib import Path
 from typing import Any, Mapping
 
-import mobase  # pyright: ignore[reportMissingModuleSource]
+import mobase
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QIcon
 
