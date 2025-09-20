@@ -6,7 +6,7 @@ authors = [{ name = "Zash", email = "zash@fantasymail.de" }]
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
-dependencies = ["pyqt6 (>=6.7.0,<7.0.0)"]
+dependencies = []
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -19,6 +19,7 @@ poethepoet = "^0.37.0"
 mypy = "^1.18.1"
 pyright = "^1.1.405"
 mobase-stubs = "^2.5.2"
+pyqt6 = "^6.7.0"
 
 [tool.poe.tasks]
 format-imports = "ruff check --select I . --fix"
