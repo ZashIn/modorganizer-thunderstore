@@ -1,5 +1,5 @@
 [project]
-name = "thunderstore-modpage"
+name = "thunderstore"
 version = "0.1.0"
 description = "thunderstore.io modpage support for Mod Organizer 2"
 authors = [{ name = "Zash", email = "zash@fantasymail.de" }]
