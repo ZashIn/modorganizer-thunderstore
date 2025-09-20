@@ -12,22 +12,30 @@ import mobase  # pyright: ignore[reportMissingModuleSource]
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QIcon
 
-game_community_mapping = {
-    # "valheim": "valheim",
-    # "subnautica": "subnautica",
-    "subnauticabelowzero": "subnautica-below-zero",
-}
-"""Mapping game short name (lowercase) to Thunderstore communities."""
 
-def get_community_name(game: mobase.IPluginGame):
-    game_name = game.gameShortName().lower()
-    return game_community_mapping.get(game_name, game_name)
+class ThunderStoreCommunity:
+    game_community_mapping = {
+        # "valheim": "valheim",
+        # "subnautica": "subnautica",
+        "subnauticabelowzero": "subnautica-below-zero",
+    }
+    """Mapping MOs game short name (lowercase) to Thunderstore communities."""
+
+    def get_community_name(self, game: mobase.IPluginGame):
+        game_name = game.gameShortName().lower()
+        return self.game_community_mapping.get(game_name, game_name)
+
 
 class ThunderstoreModPage(mobase.IPluginModPage):
-    _organizer: mobase.IOrganizer
-
     domain = "thunderstore.io"
     base_url = f"https://{domain}"
+
+    _organizer: mobase.IOrganizer
+    community: ThunderStoreCommunity
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.community = ThunderStoreCommunity()
 
     def name(self) -> str:
         return self.domain
@@ -49,7 +57,9 @@ class ThunderstoreModPage(mobase.IPluginModPage):
     def displayName(self) -> str:
         return f"Visit {self._organizer.managedGame().gameShortName()} on Thunderstore"
 
-    def handlesDownload(self, page_url: QUrl, download_url: QUrl, fileinfo: mobase.ModRepositoryFileInfo) -> bool:
+    def handlesDownload(
+        self, page_url: QUrl, download_url: QUrl, fileinfo: mobase.ModRepositoryFileInfo
+    ) -> bool:
         # BUG (MO): internal browser does handle downloads, this function is never called!
         if self.pageURL().isParentOf(page_url):
             # BUG (MO): fileinfo cannot be changed from Python
@@ -63,14 +73,16 @@ class ThunderstoreModPage(mobase.IPluginModPage):
         return QIcon(str(Path(__file__).with_name("thunderstore_icon.png").resolve()))
 
     def pageURL(self) -> QUrl:
-        community = get_community_name(self._organizer.managedGame())
-        return QUrl(f"{self.base_url}/c/{community}")
+        return QUrl(f"{self.base_url}/c/{self.get_community_name}")
 
     def useIntegratedBrowser(self: mobase.IPluginModPage) -> bool:
         return False  # BUG (MO): internal browser does handle downloads
 
     def settings(self: mobase.IPlugin) -> Sequence[mobase.PluginSetting]:
         return []
+
+    def get_community_name(self) -> str:
+        return self.community.get_community_name(self._organizer.managedGame())
 
     def update_mod_info_from_file(self, mod: mobase.IModInterface, force: bool = False):
         if not force:
@@ -80,12 +92,11 @@ class ThunderstoreModPage(mobase.IPluginModPage):
                 return
         if ts_mod_info := self.get_thunderstore_modinfo(mod):
             mod.setVersion(mobase.VersionInfo(ts_mod_info.version))
-            mod.setUrl(ts_mod_info.get_url(self._organizer.managedGame()))
+            mod.setUrl(ts_mod_info.get_url(self.get_community_name()))
 
     def get_thunderstore_modinfo(self, mod: mobase.IModInterface):
         if install_file := mod.installationFile():
             if ts_mod_info := ThunderStoreModInfo.from_file_path(Path(install_file)):
-                ts_mod_info.base_url = self.base_url
                 return ts_mod_info
         return None
 
@@ -112,9 +123,7 @@ class ThunderStoreModInfo:
             return cls(
                 **{
                     f.name: (
-                        d[f.name]
-                        if f.default is MISSING
-                        else d.get(f.name, f.default)
+                        d[f.name] if f.default is MISSING else d.get(f.name, f.default)
                     )
                     for f in fields(cls)
                     if f.init
@@ -125,6 +134,9 @@ class ThunderStoreModInfo:
 
     @classmethod
     def parse_file_name(cls, filename: str) -> re.Match[str] | None:
-        if match := re.match(r"(?P<full_name>(?P<namespace>.+?)-(?P<name>.+?))-(?P<version>[\d\.]+)\.[^.]+$", filename):
+        if match := re.match(
+            r"(?P<full_name>(?P<namespace>.+?)-(?P<name>.+?))-(?P<version>[\d\.]+)\.[^.]+$",
+            filename,
+        ):
             return match
         return None
