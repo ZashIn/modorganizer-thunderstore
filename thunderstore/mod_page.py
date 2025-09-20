@@ -72,9 +72,12 @@ class ThunderstoreModPage(mobase.IPluginModPage):
     def settings(self: mobase.IPlugin) -> Sequence[mobase.PluginSetting]:
         return []
 
-    def update_mod_info_from_file(self, mod: mobase.IModInterface):
-        if mod.nexusId() or mod.url() or mod.isBackup():
-            return
+    def update_mod_info_from_file(self, mod: mobase.IModInterface, force: bool = False):
+        if not force:
+            if mod.nexusId() or mod.isSeparator() or mod.isBackup() or mod.isForeign():
+                return
+            if (url := mod.url()) and not url.startswith(self.base_url):
+                return
         if ts_mod_info := self.get_thunderstore_modinfo(mod):
             mod.setVersion(mobase.VersionInfo(ts_mod_info.version))
             mod.setUrl(ts_mod_info.get_url(self._organizer.managedGame()))
