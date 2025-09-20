@@ -7,6 +7,9 @@ Mod Organizer 2 plugin, adding [thunderstore.io](thunderstore.io) website suppor
 - Link to thunderstore community / game site
 - Set mod version and mod site link on mod installation (from file info)
 
+## Installation
+Install the `thunderstore` module folder into MO's plugins directory.
+
 ## Limitations
 Current [Mod Organizer API limitations](https://github.com/ModOrganizer2/modorganizer/issues/2286):
 - Direct download/install ("Install with Mod Manager") via `ror2mm://` protocol not supported.  
