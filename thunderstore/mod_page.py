@@ -1,39 +1,27 @@
-from collections.abc import Sequence
 from pathlib import Path
 
 import mobase
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QIcon
 
+from .base import ThunderstoreBasePlugin
 from .community import ThunderStoreCommunity
 from .modinfo import ThunderStoreModInfo
 
 
-class ThunderstoreModPage(mobase.IPluginModPage):
-    domain = "thunderstore.io"
-    base_url = f"https://{domain}"
-
-    _organizer: mobase.IOrganizer
+class ThunderstoreModPage(ThunderstoreBasePlugin, mobase.IPluginModPage):
     community: ThunderStoreCommunity
 
     def __init__(self) -> None:
         super().__init__()
+        mobase.IPluginModPage.__init__(self)
         self.community = ThunderStoreCommunity()
 
-    def name(self) -> str:
-        return self.domain
-
-    def version(self: mobase.IPlugin) -> mobase.VersionInfo:
-        return mobase.VersionInfo(0, 1, 0)
-
-    def author(self: mobase.IPlugin) -> str:
-        return "Zash"
-
-    def description(self: mobase.IPlugin) -> str:
-        return "Adds support for thunderstore.io mod page"
+    def description(self) -> str:
+        return f"Adds support for {self.domain} mod page"
 
     def init(self, organizer: mobase.IOrganizer) -> bool:
-        self._organizer = organizer
+        super().init(organizer)
         self._organizer.modList().onModInstalled(self.update_mod_info_from_file)
         return True
 
@@ -60,9 +48,6 @@ class ThunderstoreModPage(mobase.IPluginModPage):
 
     def useIntegratedBrowser(self: mobase.IPluginModPage) -> bool:
         return False  # BUG (MO): internal browser does handle downloads
-
-    def settings(self: mobase.IPlugin) -> Sequence[mobase.PluginSetting]:
-        return []
 
     def get_community_name(self) -> str:
         return self.community.get_community_name(self._organizer.managedGame())
