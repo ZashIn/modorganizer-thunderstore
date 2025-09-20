@@ -1,29 +1,12 @@
-import re
 from collections.abc import Sequence
-from dataclasses import (
-    MISSING,
-    dataclass,
-    fields,
-)
 from pathlib import Path
-from typing import Any, Mapping
 
 import mobase
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QIcon
 
-
-class ThunderStoreCommunity:
-    game_community_mapping = {
-        # "valheim": "valheim",
-        # "subnautica": "subnautica",
-        "subnauticabelowzero": "subnautica-below-zero",
-    }
-    """Mapping MOs game short name (lowercase) to Thunderstore communities."""
-
-    def get_community_name(self, game: mobase.IPluginGame):
-        game_name = game.gameShortName().lower()
-        return self.game_community_mapping.get(game_name, game_name)
+from .community import ThunderStoreCommunity
+from .modinfo import ThunderStoreModInfo
 
 
 class ThunderstoreModPage(mobase.IPluginModPage):
@@ -98,45 +81,4 @@ class ThunderstoreModPage(mobase.IPluginModPage):
         if install_file := mod.installationFile():
             if ts_mod_info := ThunderStoreModInfo.from_file_path(Path(install_file)):
                 return ts_mod_info
-        return None
-
-
-@dataclass
-class ThunderStoreModInfo:
-    full_name: str
-    namespace: str
-    name: str
-    version: str
-
-    def get_url(self, community: str, base_url: str = "https://thunderstore.io"):
-        return f"{base_url}/c/{community}/p/{self.namespace}/{self.name}/"
-
-    @classmethod
-    def from_file_path(cls, file_path: Path):
-        if match := cls.parse_file_name(file_path.name):
-            return cls.from_dict(match.groupdict())
-        return None
-
-    @classmethod
-    def from_dict(cls, d: Mapping[str, Any]):
-        try:
-            return cls(
-                **{
-                    f.name: (
-                        d[f.name] if f.default is MISSING else d.get(f.name, f.default)
-                    )
-                    for f in fields(cls)
-                    if f.init
-                }
-            )
-        except KeyError:
-            return None
-
-    @classmethod
-    def parse_file_name(cls, filename: str) -> re.Match[str] | None:
-        if match := re.match(
-            r"(?P<full_name>(?P<namespace>.+?)-(?P<name>.+?))-(?P<version>[\d\.]+)\.[^.]+$",
-            filename,
-        ):
-            return match
         return None
