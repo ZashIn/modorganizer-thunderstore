@@ -1,6 +1,10 @@
 import re
 from collections.abc import Sequence
-from dataclasses import dataclass, fields
+from dataclasses import (
+    MISSING,
+    dataclass,
+    fields,
+)
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -22,11 +26,11 @@ def get_community_name(game: mobase.IPluginGame):
 class ThunderstoreModPage(mobase.IPluginModPage):
     _organizer: mobase.IOrganizer
 
-    def __init__(self: mobase.IPluginModPage) -> None:
-        mobase.IPluginModPage.__init__(self)
+    domain = "thunderstore.io"
+    base_url = f"https://{domain}"
 
-    def name(self: mobase.IPlugin) -> str:
-        return "thunderstore.io"
+    def name(self) -> str:
+        return self.domain
 
     def version(self: mobase.IPlugin) -> mobase.VersionInfo:
         return mobase.VersionInfo(0, 1, 0)
@@ -60,7 +64,7 @@ class ThunderstoreModPage(mobase.IPluginModPage):
 
     def pageURL(self) -> QUrl:
         community = get_community_name(self._organizer.managedGame())
-        return QUrl(f"https://thunderstore.io/c/{community}")
+        return QUrl(f"{self.base_url}/c/{community}")
 
     def useIntegratedBrowser(self: mobase.IPluginModPage) -> bool:
         return False  # BUG (MO): internal browser does handle downloads
@@ -78,6 +82,7 @@ class ThunderstoreModPage(mobase.IPluginModPage):
     def get_thunderstore_modinfo(self, mod: mobase.IModInterface):
         if install_file := mod.installationFile():
             if ts_mod_info := ThunderStoreModInfo.from_file_path(Path(install_file)):
+                ts_mod_info.base_url = self.base_url
                 return ts_mod_info
         return None
 
@@ -89,9 +94,8 @@ class ThunderStoreModInfo:
     name: str
     version: str
 
-    def get_url(self, game: mobase.IPluginGame):
-        community = get_community_name(game)
-        return f"https://thunderstore.io/c/{community}/p/{self.namespace}/{self.name}/"
+    def get_url(self, community: str, base_url: str = "https://thunderstore.io"):
+        return f"{base_url}/c/{community}/p/{self.namespace}/{self.name}/"
 
     @classmethod
     def from_file_path(cls, file_path: Path):
@@ -102,7 +106,17 @@ class ThunderStoreModInfo:
     @classmethod
     def from_dict(cls, d: Mapping[str, Any]):
         try:
-            return cls(**{f.name: d[f.name] for f in fields(cls) if f.init})
+            return cls(
+                **{
+                    f.name: (
+                        d[f.name]
+                        if f.default is MISSING
+                        else d.get(f.name, f.default)
+                    )
+                    for f in fields(cls)
+                    if f.init
+                }
+            )
         except KeyError:
             return None
 
