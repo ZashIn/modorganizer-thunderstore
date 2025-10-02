@@ -17,16 +17,15 @@ class ThunderstoreModPage(ThunderstoreBasePlugin, mobase.IPluginModPage):
         mobase.IPluginModPage.__init__(self)
         self.community = ThunderStoreCommunity()
 
-    def description(self) -> str:
-        return f"Adds support for {self.domain} mod page"
-
     def init(self, organizer: mobase.IOrganizer) -> bool:
         super().init(organizer)
         self._organizer.modList().onModInstalled(self.update_mod_info_from_file)
         return True
 
     def displayName(self) -> str:
-        return f"Visit {self._organizer.managedGame().gameShortName()} on Thunderstore"
+        return (
+            f"Visit {self._organizer.managedGame().gameShortName()} on {self.domain}"
+        )
 
     def handlesDownload(
         self, page_url: QUrl, download_url: QUrl, fileinfo: mobase.ModRepositoryFileInfo
