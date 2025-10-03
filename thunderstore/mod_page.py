@@ -39,7 +39,7 @@ class ThunderstoreModPage(ThunderstoreBasePlugin, mobase.IPluginModPage):
         return QIcon(str(Path(__file__).with_name("thunderstore_icon.png").resolve()))
 
     def pageURL(self) -> QUrl:
-        return QUrl(f"{self.base_url}/c/{self.get_community_name}")
+        return QUrl(f"{self.base_url}/c/{self.get_community_name()}")
 
     def useIntegratedBrowser(self: mobase.IPluginModPage) -> bool:
         return False  # BUG (MO): internal browser does handle downloads
