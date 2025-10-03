@@ -22,7 +22,7 @@ class ThunderstoreBasePlugin(mobase.IPlugin):
         return self.base_name
 
     def version(self: mobase.IPlugin) -> mobase.VersionInfo:
-        return mobase.VersionInfo(0, 1, 0)
+        return mobase.VersionInfo(0, 2, 0)
 
     def author(self: mobase.IPlugin) -> str:
         return "Zash"
