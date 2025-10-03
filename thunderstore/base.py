@@ -8,6 +8,7 @@ class ThunderstoreBasePlugin(mobase.IPlugin):
     domain = "thunderstore.io"
     base_url = f"https://{domain}"
 
+    community_name_setting = "thunderstore_community"
     community_name = ""
     """Thunderstore community name, see `.get_community_name()`."""
 
@@ -32,7 +33,7 @@ class ThunderstoreBasePlugin(mobase.IPlugin):
     def settings(self) -> Sequence[mobase.PluginSetting]:
         return [
             mobase.PluginSetting(
-                "thunderstore_community",
+                self.community_name_setting,
                 (
                     "Set/overwrite the current thunderstore community."
                     " By default it is retrieved from the game plugin."
@@ -45,19 +46,19 @@ class ThunderstoreBasePlugin(mobase.IPlugin):
         """
         Thunderstore community name (from url `/c/<community>`) for page and mod URL.
         The community name can be set by / is checked in this order:
-        - Setting `thunderstore_community` on this plugin or the game plugin.
+        - Setting `.community_name_setting` on this plugin or the game plugin.
         - Adding a `GameThunderstoreName` attribute or `gameThunderstoreName()` method to `mobase.IPluginGame`.
         - Setting the `community_name` attribute.
         """
         # from plugin setting
         if community_name := self._organizer.pluginSetting(
-            self.base_name, "thunderstore_community"
+            self.base_name, self.community_name_setting
         ):
             return str(community_name)
         game = self._organizer.managedGame()
         # from game plugin setting
         if community_name := self._organizer.pluginSetting(
-            game.name(), "thunderstore_community"
+            game.name(), self.community_name_setting
         ):
             return str(community_name)
         # from game plugin attribute / method
