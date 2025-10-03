@@ -72,3 +72,11 @@ class ThunderstoreBasePlugin(mobase.IPlugin):
             ):
                 return community_name
         return self.community_name
+
+    def requirements(self) -> list[mobase.IPluginRequirement]:
+        return [
+            mobase.PluginRequirementFactory.basic(
+                lambda organizer: self.get_community_name() != "",
+                f"{self.base_name} community name needs to be set (for the current game).",
+            )
+        ]

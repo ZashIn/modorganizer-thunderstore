@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from pathlib import Path
 
 import mobase
@@ -11,6 +12,15 @@ class ThunderstoreModPage(ThunderstoreBasePlugin, mobase.IPluginModPage):
     def __init__(self) -> None:
         super().__init__()
         mobase.IPluginModPage.__init__(self)
+
+    def master(self) -> str:
+        return self.base_name
+
+    def name(self) -> str:
+        return f"{self.base_name} Mod Page"
+
+    def settings(self) -> Sequence[mobase.PluginSetting]:
+        return []
 
     def displayName(self) -> str:
         return f"Visit {self.get_community_name()} on {self.domain}"
