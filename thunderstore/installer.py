@@ -1,8 +1,10 @@
 import json
 import sys
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 
 import mobase
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMessageBox
 
 from .base import ThunderstoreBasePlugin
 from .package_info import Manifest, PackageInfo
@@ -45,7 +47,13 @@ class ThunderstoreInstaller(ThunderstoreBasePlugin, mobase.IPluginInstallerSimpl
         return f"{self.base_name} package installer"
 
     def settings(self) -> Sequence[mobase.PluginSetting]:
-        return []
+        return [
+            mobase.PluginSetting(
+                "check_dependencies",
+                "Check dependencies from thunderstore manifest",
+                True,
+            ),
+        ]
 
     def isArchiveSupported(self, tree: mobase.IFileTree) -> bool:
         manifest = tree.find(self.manifest_file, mobase.FileTreeEntry.FileTypes.FILE)
@@ -73,8 +81,14 @@ class ThunderstoreInstaller(ThunderstoreBasePlugin, mobase.IPluginInstallerSimpl
         )
         if not manifest_entry or not (manifest := self.load_manifest(manifest_entry)):
             return mobase.InstallResult.NOT_ATTEMPTED
+        # Update metadata
         name.update(manifest.name, mobase.GuessQuality.META)
         version = manifest.version_number
+        # Check dependencies
+        if manifest.dependencies and not self.check_dependencies(
+            manifest.dependencies, manifest.name
+        ):
+            return mobase.InstallResult.CANCELED
         # Return NOT_ATTEMPTED to let other installer, like Simple Installer (InstallerQuick), handle actual installation.
         return mobase.InstallResult.NOT_ATTEMPTED, tree, version, nexus_id
 
@@ -91,6 +105,55 @@ class ThunderstoreInstaller(ThunderstoreBasePlugin, mobase.IPluginInstallerSimpl
             )
             return None
         return manifest
+
+    def check_dependencies(self, dependencies: Iterable[str], mod_name: str):
+        if self._organizer.pluginSetting(self.name(), "check_dependencies") is False:
+            return True
+        modlist = self._organizer.modList()
+        installed_deps: list[str] = []
+        missing_deps: list[PackageInfo | str] = []
+        for dep_str in dependencies:
+            if not (ts_mod_info := PackageInfo.parse_dependency_str(dep_str)):
+                print(f"Unknown dependency: {dep_str}", file=sys.stderr)
+            if mod := (
+                ts_mod_info
+                and (
+                    modlist.getMod(ts_mod_info.name)
+                    or modlist.getMod(ts_mod_info.full_name)
+                )
+                or modlist.getMod(dep_str)
+            ):
+                installed_deps.append(mod.name())
+            else:
+                missing_deps.append(ts_mod_info or dep_str)
+        if missing_deps:
+            community = self.get_community_name()
+            missing_deps_md = (
+                f"[{d.dependency_str}]({d.get_url(self.base_url, community)})"
+                if isinstance(d, PackageInfo)
+                else d
+                for d in missing_deps
+            )
+            installed = (
+                f"\n\nInstalled:\n- {'\n- '.join(installed_deps)}"
+                if installed_deps
+                else ""
+            )
+            msg = QMessageBox(
+                QMessageBox.Icon.Information,
+                "Missing dependencies",
+                (
+                    f'For the mod "{mod_name}" the following dependencies are required:\n\n'
+                    f"Missing:\n- {'\n- '.join(missing_deps_md)}"
+                    f"{installed}"
+                ),
+                buttons=QMessageBox.StandardButton.Ok
+                | QMessageBox.StandardButton.Cancel,
+                parent=self._parentWidget(),
+            )
+            msg.setTextFormat(Qt.TextFormat.MarkdownText)
+            return msg.exec() != QMessageBox.StandardButton.Cancel
+        return True
 
     def add_missing_url(self, mod: mobase.IModInterface):
         if (
