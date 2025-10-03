@@ -5,7 +5,6 @@ from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QIcon
 
 from .base import ThunderstoreBasePlugin
-from .modinfo import ThunderStoreModInfo
 
 
 class ThunderstoreModPage(ThunderstoreBasePlugin, mobase.IPluginModPage):
@@ -13,15 +12,8 @@ class ThunderstoreModPage(ThunderstoreBasePlugin, mobase.IPluginModPage):
         super().__init__()
         mobase.IPluginModPage.__init__(self)
 
-    def init(self, organizer: mobase.IOrganizer) -> bool:
-        super().init(organizer)
-        self._organizer.modList().onModInstalled(self.update_mod_info_from_file)
-        return True
-
     def displayName(self) -> str:
-        return (
-            f"Visit {self._organizer.managedGame().gameShortName()} on {self.domain}"
-        )
+        return f"Visit {self.get_community_name()} on {self.domain}"
 
     def handlesDownload(
         self, page_url: QUrl, download_url: QUrl, fileinfo: mobase.ModRepositoryFileInfo
@@ -43,18 +35,3 @@ class ThunderstoreModPage(ThunderstoreBasePlugin, mobase.IPluginModPage):
 
     def useIntegratedBrowser(self: mobase.IPluginModPage) -> bool:
         return False  # BUG (MO): internal browser does handle downloads
-
-    def update_mod_info_from_file(self, mod: mobase.IModInterface, force: bool = False):
-        if not force:
-            if mod.nexusId() or mod.isSeparator() or mod.isBackup() or mod.isForeign():
-                return
-            if (url := mod.url()) and not url.startswith(self.base_url):
-                return
-        if ts_mod_info := self.get_thunderstore_modinfo(mod):
-            mod.setVersion(mobase.VersionInfo(ts_mod_info.version))
-            mod.setUrl(ts_mod_info.get_url(self.base_url, self.get_community_name()))
-
-    def get_thunderstore_modinfo(self, mod: mobase.IModInterface):
-        if install_file := mod.installationFile():
-            return ThunderStoreModInfo.from_file_path(install_file)
-        return None

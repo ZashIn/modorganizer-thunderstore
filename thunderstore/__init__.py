@@ -1,5 +1,6 @@
-from .mod_page import ThunderstoreModPage
+from .installer import ThunderstoreInstaller as ThunderstoreInstaller
+from .mod_page import ThunderstoreModPage as ThunderstoreModPage
 
 
-def createPlugin():
-    return ThunderstoreModPage()
+def createPlugins():
+    return [ThunderstoreModPage(), ThunderstoreInstaller()]

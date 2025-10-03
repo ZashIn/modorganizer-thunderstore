@@ -1,19 +1,24 @@
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Self
+from typing import Any, Self
+
+from .utils import dataclass_from_dict
 
 
 @dataclass
-class ThunderStoreModInfo:
+class PackageInfo:
     full_name: str
     namespace: str
     name: str
     version: str
 
+    @property
+    def dependency_str(self):
+        return f"{self.full_name}-{self.version}"
+
     def get_url(self, base_url: str, community: str):
         return f"{base_url}/c/{community}/p/{self.namespace}/{self.name}/"
-
 
     @classmethod
     def from_file_path(cls, str_path: str | Path) -> Self | None:
@@ -32,3 +37,20 @@ class ThunderStoreModInfo:
         ):
             return cls(**match.groupdict())
         return None
+
+
+@dataclass
+class Manifest:
+    name: str
+    description: str
+    version_number: str
+    website_url: str
+    dependencies: list[str] | None = None
+
+    @classmethod
+    def from_json(cls, json_dict: dict[str, Any]) -> Self:
+        """
+        Raises:
+            TypeError: for missing required field
+        """
+        return dataclass_from_dict(cls, json_dict)

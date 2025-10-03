@@ -51,7 +51,7 @@ class ThunderstoreBasePlugin(mobase.IPlugin):
         """
         # from plugin setting
         if community_name := self._organizer.pluginSetting(
-            self.name(), "thunderstore_community"
+            self.base_name, "thunderstore_community"
         ):
             return str(community_name)
         game = self._organizer.managedGame()
