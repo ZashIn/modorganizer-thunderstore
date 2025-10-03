@@ -1,11 +1,7 @@
 import re
-from dataclasses import (
-    MISSING,
-    dataclass,
-    fields,
-)
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Self
 
 
 @dataclass
@@ -15,35 +11,24 @@ class ThunderStoreModInfo:
     name: str
     version: str
 
-    def get_url(self, community: str, base_url: str = "https://thunderstore.io"):
+    def get_url(self, base_url: str, community: str):
         return f"{base_url}/c/{community}/p/{self.namespace}/{self.name}/"
 
-    @classmethod
-    def from_file_path(cls, file_path: Path):
-        if match := cls.parse_file_name(file_path.name):
-            return cls.from_dict(match.groupdict())
-        return None
 
     @classmethod
-    def from_dict(cls, d: Mapping[str, Any]):
-        try:
-            return cls(
-                **{
-                    f.name: (
-                        d[f.name] if f.default is MISSING else d.get(f.name, f.default)
-                    )
-                    for f in fields(cls)
-                    if f.init
-                }
-            )
-        except KeyError:
-            return None
+    def from_file_path(cls, str_path: str | Path) -> Self | None:
+        if isinstance(str_path, str):
+            str_path = Path(str_path)
+        return cls.parse_dependency_str(str_path.name)
 
     @classmethod
-    def parse_file_name(cls, filename: str) -> re.Match[str] | None:
+    def parse_dependency_str(cls, name: str) -> Self | None:
+        """
+        Parse thunderstore dependency string or file name, e.g. `"namespace-name-1.0.0"`.
+        """
         if match := re.match(
-            r"(?P<full_name>(?P<namespace>.+?)-(?P<name>.+?))-(?P<version>[\d\.]+)\.[^.]+$",
-            filename,
+            r"^(?P<full_name>(?P<namespace>.+?)-(?P<name>.+?))-(?P<version>[\d\.]+\d)",
+            name,
         ):
-            return match
+            return cls(**match.groupdict())
         return None
