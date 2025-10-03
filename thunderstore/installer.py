@@ -1,6 +1,6 @@
 import json
 import sys
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 
 import mobase
 from PyQt6.QtCore import Qt
@@ -8,15 +8,24 @@ from PyQt6.QtWidgets import QMessageBox
 
 from .base import ThunderstoreBasePlugin
 from .package_info import Manifest, PackageInfo
+from .utils import hide_file_tree_entry
 
 
 class ThunderstoreInstaller(ThunderstoreBasePlugin, mobase.IPluginInstallerSimple):
     """
     Installer for [thunderstore.io packages](https://thunderstore.io/package/create/docs/).
-    Only extracts and sets mod metadata.
+    Only extracts mod metadata and modifies metadata package files (according to setting `package_file_action`).
 
     The actual installation of mod contents is handled by other installers (with lower priority),
     like the Simple Installer (InstallerQuick), which uses `mobase.ModDataChecker`.
+    """
+
+    package_file_actions: dict[
+        str, Callable[[mobase.IFileTree, mobase.FileTreeEntry], bool]
+    ]
+    """
+    Callback for each file in `.package_files`. The action is chosen by the setting `package_file_action`.
+    Return False to abort the file iteration.
     """
 
     manifest_file = "manifest.json"
@@ -31,6 +40,11 @@ class ThunderstoreInstaller(ThunderstoreBasePlugin, mobase.IPluginInstallerSimpl
             "README.md",
             "CHANGELOG.md",
         ]
+        self.package_file_actions = {
+            "ignore": lambda tree, entry: False,
+            "hide": hide_file_tree_entry,
+            "remove": lambda tree, entry: entry.detach(),
+        }
 
     def init(self, organizer: mobase.IOrganizer) -> bool:
         super().init(organizer)
@@ -52,6 +66,11 @@ class ThunderstoreInstaller(ThunderstoreBasePlugin, mobase.IPluginInstallerSimpl
                 "check_dependencies",
                 "Check dependencies from thunderstore manifest",
                 True,
+            ),
+            mobase.PluginSetting(
+                "package_file_action",
+                f"What to do with package files: {', '.join(self.package_file_actions)}",
+                "hide",
             ),
         ]
 
@@ -89,6 +108,11 @@ class ThunderstoreInstaller(ThunderstoreBasePlugin, mobase.IPluginInstallerSimpl
             manifest.dependencies, manifest.name
         ):
             return mobase.InstallResult.CANCELED
+        # Modify package files
+        if (action := self.get_package_file_action()) is not None:
+            for file in self.package_files:
+                if (entry := tree.find(file)) is not None and not action(tree, entry):
+                    break
         # Return NOT_ATTEMPTED to let other installer, like Simple Installer (InstallerQuick), handle actual installation.
         return mobase.InstallResult.NOT_ATTEMPTED, tree, version, nexus_id
 
@@ -154,6 +178,13 @@ class ThunderstoreInstaller(ThunderstoreBasePlugin, mobase.IPluginInstallerSimpl
             msg.setTextFormat(Qt.TextFormat.MarkdownText)
             return msg.exec() != QMessageBox.StandardButton.Cancel
         return True
+
+    def get_package_file_action(self):
+        if action_name := self._organizer.pluginSetting(
+            self.name(), "package_file_action"
+        ):
+            return self.package_file_actions.get(str(action_name), None)
+        return None
 
     def add_missing_url(self, mod: mobase.IModInterface):
         if (
