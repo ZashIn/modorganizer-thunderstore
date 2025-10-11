@@ -10,7 +10,8 @@ permissions:
 
 env:
   MODULE: thunderstore
-  RELEASE_FILE: thunderstore-${{ github.ref_name }}.zip
+  ASSET_FILE: thunderstore-${{ github.ref_name }}.zip
+  CHANGELOG: CHANGELOG.md
 
 jobs:
   test:
@@ -32,8 +33,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
       - name: Pack Module
-        run: git archive "${{ github.ref_name }}" -o "${{ env.RELEASE_FILE }}" -- "${{ env.MODULE }}"
+        run: git archive "$GITHUB_REF_NAME" -o "$ASSET_FILE" -- "$MODULE"
+      - name: Create release notes from changelog
+        run: |
+          echo -e "# Changes\n" > RELEASE.md
+          version="${GITHUB_REF_NAME#v}"
+          # For patch version with missing changelog entry, match minor version, too.
+          if [[ version =~ ([0-9]+.[0-9]+).[0-9]+ ]]; then
+            version="($version|${BASH_REMATCH[1]}[.0-9]*)"
+          fi
+          # Find relevant part in changelog (## $version ... ## )
+          grep -Pazo "(?sm)^## \[?v?$version\]?\s.+?(?=\Z|^\n?## )" $CHANGELOG | tr -d '\0' >> RELEASE.md
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.RELEASE_FILE }}
+          files: ${{ env.ASSET_FILE }}
+          body_path: RELEASE.md
+          draft: true
