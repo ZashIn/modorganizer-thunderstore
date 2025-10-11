@@ -30,15 +30,8 @@ def dataclass_from_dict[DataClass: DataclassInstance](
 def hide_file_tree_entry(
     tree: mobase.IFileTree,
     entry: mobase.FileTreeEntry,
-    hidden_suffix: str = ".mohidden",
+    hidden_suffix: str = "mohidden",
 ):
-    return tree.move(entry, add_hidden_suffix(entry, hidden_suffix))
-
-
-def add_hidden_suffix(
-    entry: mobase.FileTreeEntry, hidden_suffix: str = ".mohidden"
-) -> str:
-    entry_name = entry.name()
-    if (old_suffix := f".{entry.suffix()}") != ".":
-        entry_name = entry_name[: -len(old_suffix)]
-    return f"{entry_name}{hidden_suffix}{old_suffix}"
+    if entry.suffix() == hidden_suffix:
+        return True
+    return tree.move(entry, f"{entry.name()}.{hidden_suffix}")
