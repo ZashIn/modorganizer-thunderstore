@@ -24,6 +24,12 @@ pyright = "^1.1.405"
 mobase-stubs = "^2.5.2"
 pyqt6 = "^6.7.0"
 
+[tool.poetry.group.build.dependencies]
+nuitka = "^2.8.1"
+
+[tool.poetry.group.build]
+optional = true
+
 [tool.poe.tasks]
 format-imports = "ruff check --select I . --fix"
 format-ruff = "ruff format ."
@@ -34,6 +40,15 @@ lint-pyright = "pyright ."
 lint-mypy = "mypy ."
 lint.sequence = ["lint-ruff", "lint-ruff-format", "lint-pyright", "lint-mypy"]
 lint.ignore_fail = "return_non_zero"
+
+[tool.poe.tasks.build]
+help = "small thunderstore/protocol/thunderstore_protocol_handler.exe, requires matching Python version under MO/plugins/plugin_python/dlls"
+shell = """python -m nuitka thunderstore/protocol \
+    --mode=accelerated \
+    --windows-console-mode=hide \
+    --no-deployment-flag=self-execution \
+    --output-dir=build \
+    --output-filename=thunderstore/protocol/thunderstore_protocol_handler.exe"""
 
 [tool.pyright]
 reportMissingModuleSource = false

@@ -9,7 +9,7 @@ from pathlib import Path
 from tkinter import messagebox
 from typing import Any
 
-from .register import ProtocolRegister
+from .register import ThunderstoreProtocolRegister
 from .thunderstore_protocol import ThunderstoreProtocol
 
 MO_EXE = "ModOrganizer.exe"
@@ -99,8 +99,8 @@ def main():
         out.error("Mod Organizer executable not found:", mo_exe_path)
         return 1
     if args.register:
-        protocol_register = ProtocolRegister(mo_exe_path)
-        reg_address, command = protocol_register.register_protocol_handler()
+        protocol_register = ThunderstoreProtocolRegister(mo_exe_path)
+        reg_address, command = protocol_register.register_protocol_command()
         out.info(f'Protocol registered under "{reg_address}" as:', command)
         return 0
     try:
