@@ -3,7 +3,11 @@ import argparse
 import os
 import subprocess
 import sys
+from collections.abc import Callable
+from functools import partial
 from pathlib import Path
+from tkinter import messagebox
+from typing import Any
 
 from .register import ProtocolRegister
 from .thunderstore_protocol import ThunderstoreProtocol
@@ -40,6 +44,19 @@ parser.add_argument(
     type=Path,
     default=None,
 )
+parser.add_argument(
+    "-s",
+    "--silent",
+    help="Suppress non-error messages.",
+    action="store_true",
+)
+parser.add_argument(
+    "-g",
+    "--gui",
+    dest="gui",
+    help="output errors in GUI / messagebox instead of CLI.",
+    action="store_true",
+)
 
 
 def mo_download_command(mo_executable: str | Path, url: str):
@@ -50,29 +67,50 @@ def download_with_mo(mo_executable: str | Path, url: str):
     subprocess.Popen(mo_download_command(mo_executable, url))
 
 
+class Output:
+    info: Callable[..., Any]
+    error: Callable[..., Any]
+
+    def __init__(
+        self, gui: bool = False, title: str = "", silent: bool = False
+    ) -> None:
+        self.info = (lambda *args: None) if silent else print
+        if gui:
+            self.error = lambda *args: messagebox.showerror(
+                title, " ".join(str(a) for a in args)
+            )
+        else:
+            self.error = partial(print, file=sys.stderr)
+
+
 def main():
     args = parser.parse_args()
+    out = Output(
+        args.gui or sys.stderr is None,
+        f"{ThunderstoreProtocol.scheme}:// handler for Mod Organizer",
+        args.silent,
+    )
     mo_exe_path: Path | None = args.modorganizer
     if not mo_exe_path:
         mo_exe_path = get_mo_executable()
     elif mo_exe_path.is_dir():
         mo_exe_path = mo_exe_path / MO_EXE
     if not mo_exe_path.exists():
-        print("Mod Organizer executable not found:", mo_exe_path, file=sys.stderr)
+        out.error("Mod Organizer executable not found:", mo_exe_path)
         return 1
     if args.register:
         protocol_register = ProtocolRegister(mo_exe_path)
         reg_address, command = protocol_register.register_protocol_handler()
-        print(f'Protocol registered under "{reg_address}" as:', command)
+        out.info(f'Protocol registered under "{reg_address}" as:', command)
         return 0
     try:
         dl_url = ThunderstoreProtocol.parse_url(args.url).get_download_url()
     except ValueError as e:
         # Invalid protocol
-        print(e, file=sys.stderr)
+        out.error(e)
         return 2
     if dl_url:
-        print("Running:", *mo_download_command(mo_exe_path, dl_url))
+        out.info("Running:", *mo_download_command(mo_exe_path, dl_url))
         download_with_mo(
             mo_exe_path,
             dl_url,
