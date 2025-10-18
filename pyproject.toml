@@ -63,5 +63,14 @@ shell = """python -m nuitka thunderstore/protocol \
     && mv -t thunderstore/protocol/ build/thunderstore_protocol_handler.exe"""
     # Workaround for filename path [bug](https://github.com/Nuitka/Nuitka/issues/3642)
 
+[tool.poe.tasks.pack]
+help = "Pack the plugin, including compiled exe"
+shell = """git archive -o modorganizer-thunderstore.zip \
+    --prefix=thunderstore/protocol/ \
+    --add-file thunderstore/protocol/*.exe \
+    --add-file thunderstore/protocol/.python-version \
+    --prefix= \
+    HEAD thunderstore"""
+
 [tool.pyright]
 reportMissingModuleSource = false
