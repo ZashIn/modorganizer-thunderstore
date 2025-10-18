@@ -8,6 +8,7 @@ from functools import partial
 from pathlib import Path
 from tkinter import messagebox
 from typing import Any
+from urllib.request import urlopen
 
 from .register import ThunderstoreProtocolRegister
 from .thunderstore_protocol import ThunderstoreProtocol
@@ -72,6 +73,12 @@ def download_with_mo(mo_executable: str | Path, url: str):
     subprocess.Popen(mo_download_command(mo_executable, url))
 
 
+def resolve_redirections(url: str):
+    """Workaround for [BUG: MO not resolving download URL redirections](https://github.com/ModOrganizer2/modorganizer/issues/2298)."""
+    with urlopen(url) as response:
+        return response.geturl()
+
+
 class Output:
     info: Callable[..., Any]
     error: Callable[..., Any]
@@ -117,6 +124,8 @@ def main():
         out.error(e)
         return 2
     if dl_url:
+        out.info("Resolving redirections for:", dl_url)
+        dl_url = resolve_redirections(dl_url)
         out.info("Running:", *mo_download_command(mo_exe_path, dl_url))
         download_with_mo(
             mo_exe_path,
