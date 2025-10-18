@@ -52,5 +52,16 @@ shell = """python -m nuitka thunderstore/protocol \
     && python -c "import sys; open('thunderstore/protocol/.python-version', 'w').write('{}.{}'.format(*sys.version_info[:2]))"
     """
 
+[tool.poe.tasks.build-standalone]
+help = "MO independent exe, bundled with Python"
+shell = """python -m nuitka thunderstore/protocol \
+    --mode=onefile \
+    --windows-console-mode=hide \
+    --no-deployment-flag=self-execution \
+    --output-dir=build \
+    --output-filename=thunderstore_protocol_handler.exe \
+    && mv -t thunderstore/protocol/ build/thunderstore_protocol_handler.exe"""
+    # Workaround for filename path [bug](https://github.com/Nuitka/Nuitka/issues/3642)
+
 [tool.pyright]
 reportMissingModuleSource = false
