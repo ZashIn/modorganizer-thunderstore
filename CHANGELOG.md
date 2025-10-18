@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.0
+Add `ror2mm:` protocol handler for "Install with Mod Manager" links, registered on MO start or via tools menu.
+
 ## 0.2.1
 Adds a Thunderstore Installer (`IPluginInstaller`):
 - Set mod version and site link on mod installation (from package metadata and file name).
