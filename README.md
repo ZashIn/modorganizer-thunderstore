@@ -3,23 +3,16 @@
 Mod Organizer 2 plugin, adding [thunderstore.io](https://thunderstore.io/) website support.
 
 ## Features
-- Adds a Thunderstore Installer (`IPluginInstaller`):
+- `ror2mm:` protocol handler for "Install with Mod Manager" links (registered on MO start or via tools menu)
+- Thunderstore Installer (`IPluginInstaller`):
   - Set mod version and site link on mod installation (from package metadata).
   - Show missing dependencies (links).
   - Modify thunderstore package files (meta data), configurable via `package_file_action`.
-- Adds a Thunderstore Mod Page (`IPluginModPage`):
+- Thunderstore Mod Page (`IPluginModPage`):
   - Link to thunderstore community / game site (under 🌎).
 
 ## Installation
-Install the `thunderstore` module folder into MO's plugins directory.
-
-## Usage
-1. On [thunderstore.io](https://thunderstore.io/) (can be opened in MO from 🌎) download a mod via Manual Download:
-  Either download directly into MOs downloads dir (in MO: 📁▾ Open Downloads folder)  
-  or via drag & drop (link or downloaded file) into MOs downloads tab.
-1. (Refresh downloads in MO.)
-2. Double click the download in MO (or right click / Install).
-3. Thunderstore link and version is updated, package metadata files are installed hidden (by default) from MOs virtual file system.
+Install/extract the `thunderstore` folder into MO's plugins directory.
 
 ## Settings
 Under `Setting/Plugins/Thunderstore`:
@@ -29,7 +22,18 @@ Under `Setting/Plugins/Thunderstore`:
 - `check_dependencies`: display missing dependencies (default: true).
 - `package_file_action`: ignore, remove or hide (default, adds `.mohidden` suffix).
 
-## Dev info: add game support
+## Development info
+### Protocol handler compilation
+To support Windows systems without a Python installation, a compiled Python handler (`thunderstore/protocol/cli.py`) is included, too.
+
+Building `thunderstore/protocol/thunderstore_protocol_handler.exe`:
+- install [Nuitka requirements](https://nuitka.net/user-documentation/user-manual.html#requirements)
+- install [Poetry](https://python-poetry.org/docs/#installation), e.g. via `pipx install poetry`
+- `poetry install --no-root --with build`: including optional build deps
+- `poe build`: for small exe, using MOs integrated Python libs (`plugins/plugin_python/dlls`), **Python version has to match**
+- `poe build-standalone`: for standalone exe with integrated python.
+
+### Add game support
 You can add thunderstore support to a game plugin ([`BasicGame`](https://github.com/ModOrganizer2/modorganizer-basic_games) / [IPluginGame](https://www.modorganizer.org/python-plugins-doc/plugin-types.html#game)) by setting the community name in one of the following ways:
 - Add a [setting](https://www.modorganizer.org/python-plugins-doc/autoapi/mobase/index.html#mobase.PluginSetting) `"thunderstore_community"` to a game plugin:
   ```py
@@ -44,6 +48,4 @@ You can add thunderstore support to a game plugin ([`BasicGame`](https://github.
 
 ## Limitations
 Current [Mod Organizer API limitations](https://github.com/ModOrganizer2/modorganizer/issues/2286):
-- Direct download/install ("Install with Mod Manager") via `ror2mm://` protocol not supported.  
-  **Alternative:** Manual download into the MOs instance download folder adds it to the download list
 - Cannot show thunderstore website in MOs internal browser (only Nexus supported / does not handle downloads correctly)
