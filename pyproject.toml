@@ -48,7 +48,9 @@ shell = """python -m nuitka thunderstore/protocol \
     --windows-console-mode=hide \
     --no-deployment-flag=self-execution \
     --output-dir=build \
-    --output-filename=thunderstore/protocol/thunderstore_protocol_handler.exe"""
+    --output-filename=thunderstore/protocol/thunderstore_protocol_handler.exe \
+    && python -c "import sys; open('thunderstore/protocol/.python-version', 'w').write('{}.{}'.format(*sys.version_info[:2]))"
+    """
 
 [tool.pyright]
 reportMissingModuleSource = false
