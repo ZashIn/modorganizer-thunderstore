@@ -22,7 +22,9 @@ def get_mo_executable() -> Path:
 
 
 parser = argparse.ArgumentParser(
-    description=f"{ThunderstoreProtocol.scheme}: protocol handler for Mod Organizer"
+    description=(
+        f"{ThunderstoreProtocol.scheme}: protocol handler for Mod Organizer. Required: -r/--register or url"
+    )
 )
 group = parser.add_mutually_exclusive_group(required=True)
 group.add_argument(
@@ -36,6 +38,9 @@ group.add_argument(
     "--register",
     action="store_true",
     help=f"register as {ThunderstoreProtocol.scheme}: handler",
+)
+parser.add_argument(
+    "-e", "--exe", help="prefer compiled exe over python handler", action="store_true"
 )
 parser.add_argument(
     "-m",
@@ -99,7 +104,9 @@ def main():
         out.error("Mod Organizer executable not found:", mo_exe_path)
         return 1
     if args.register:
-        protocol_register = ThunderstoreProtocolRegister(mo_exe_path)
+        protocol_register = ThunderstoreProtocolRegister(
+            mo_exe_path, reverse_order=args.exe
+        )
         reg_address, command = protocol_register.register_protocol_command()
         out.info(f'Protocol registered under "{reg_address}" as:', command)
         return 0
