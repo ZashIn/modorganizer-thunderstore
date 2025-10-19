@@ -6,6 +6,7 @@ from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QIcon
 
 from .base import ThunderstoreBasePlugin
+from .protocol.utils import abs_norm_path
 
 
 class ThunderstoreModPage(ThunderstoreBasePlugin, mobase.IPluginModPage):
@@ -38,7 +39,9 @@ class ThunderstoreModPage(ThunderstoreBasePlugin, mobase.IPluginModPage):
         return False
 
     def icon(self: mobase.IPluginModPage) -> QIcon:
-        return QIcon(str(Path(__file__).with_name("thunderstore_icon.png").resolve()))
+        return QIcon(
+            str(abs_norm_path(Path(__file__).with_name("thunderstore_icon.png")))
+        )
 
     def pageURL(self) -> QUrl:
         return QUrl(f"{self.base_url}/c/{self.get_community_name()}")

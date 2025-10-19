@@ -12,14 +12,14 @@ from urllib.request import urlopen
 
 from .register import ThunderstoreProtocolRegister
 from .thunderstore_protocol import ThunderstoreProtocol
+from .utils import abs_norm_path
 
 MO_EXE = "ModOrganizer.exe"
 
 
 def get_mo_executable() -> Path:
     # MO (MO_EXE)/plugins/thunderstore/protocol/__file__
-    # normalize without resolving symlinks!
-    return Path(os.path.abspath(os.path.join(__file__, "../../../..", MO_EXE)))
+    return abs_norm_path(os.path.join(__file__, "../../../..", MO_EXE))
 
 
 parser = argparse.ArgumentParser(
@@ -46,7 +46,7 @@ parser.add_argument(
 parser.add_argument(
     "-m",
     "--modorganizer",
-    help=f"path to ModOrganizer.exe (defaults to {get_mo_executable()})",
+    help=f"path to {MO_EXE} (defaults to .../plugins/../{MO_EXE})",
     type=Path,
     default=None,
 )
@@ -102,12 +102,10 @@ def main():
         f"{ThunderstoreProtocol.scheme}:// handler for Mod Organizer",
         args.silent,
     )
-    mo_exe_path: Path | None = args.modorganizer
-    if not mo_exe_path:
-        mo_exe_path = get_mo_executable()
-    elif mo_exe_path.is_dir():
+    mo_exe_path: Path | None = args.modorganizer or get_mo_executable()
+    if mo_exe_path and mo_exe_path.is_dir():
         mo_exe_path = mo_exe_path / MO_EXE
-    if not mo_exe_path.exists():
+    if not mo_exe_path or not mo_exe_path.exists():
         out.error("Mod Organizer executable not found:", mo_exe_path)
         return 1
     if args.register:

@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QCheckBox, QMainWindow, QMessageBox, QWidget
 
 from .base import ThunderstoreBasePlugin
 from .protocol.register import ThunderstoreProtocolRegister
+from .protocol.utils import abs_norm_path
 
 
 class ThunderstoreRegisterTool(ThunderstoreBasePlugin, mobase.IPluginTool):
@@ -20,7 +21,7 @@ class ThunderstoreRegisterTool(ThunderstoreBasePlugin, mobase.IPluginTool):
     def init(self, organizer: mobase.IOrganizer) -> bool:
         super().init(organizer)
         self.protocol_register = ThunderstoreProtocolRegister(
-            Path(sys.executable).resolve()
+            abs_norm_path(sys.executable)
         )
         if self._organizer.pluginSetting(self.name(), "register_protocol"):
             if self.protocol_register.is_command_registered():
@@ -65,7 +66,9 @@ class ThunderstoreRegisterTool(ThunderstoreBasePlugin, mobase.IPluginTool):
         return f'Open "Install with Mod Manager" links ({ThunderstoreProtocolRegister.scheme}:) with Mod Organizer'
 
     def icon(self) -> QIcon:
-        return QIcon(str(Path(__file__).with_name("thunderstore_icon.png").resolve()))
+        return QIcon(
+            str(abs_norm_path(Path(__file__).with_name("thunderstore_icon.png")))
+        )
 
     def display(self) -> None:
         if self.protocol_register.is_command_registered():

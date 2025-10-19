@@ -1,4 +1,3 @@
-import os
 import shutil
 import sys
 import winreg
@@ -7,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .thunderstore_protocol import THUNDERSTORE_SCHEME
+from .utils import abs_norm_path
 
 
 class ProtocolRegister:
@@ -75,8 +75,8 @@ class PythonProtocolHandler(ProtocolHandler):
         python_exe = self.python_exe
         if not python_exe:
             python_exe = self.find_python_executable(self.mo_exe_path)
-        if python_exe and (python_exe := python_exe.resolve()).exists():
-            return f'"{python_exe}" "{os.path.abspath(self.python_handler)}" --gui --modorganizer "{self.mo_exe_path}"'
+        if python_exe and (python_exe := abs_norm_path(python_exe)).exists():
+            return f'"{python_exe}" "{abs_norm_path(self.python_handler)}" --gui --modorganizer "{abs_norm_path(self.mo_exe_path)}"'
         return None
 
     def find_python_executable(
@@ -96,12 +96,12 @@ class ExeProtocolHandler(ProtocolHandler):
     compiled_handler: Path = Path(__file__, "../thunderstore_protocol_handler.exe")
 
     def get_handler_command(self) -> str | None:
-        if (exe := Path(os.path.abspath(self.compiled_handler))).exists():
+        if (exe := abs_norm_path(self.compiled_handler)).exists():
             if (exe_cmd := exe.with_suffix(".cmd")).exists():
                 cmd = exe_cmd
             else:
                 cmd = exe
-            return f'"{cmd}" --gui --modorganizer "{self.mo_exe_path}"'
+            return f'"{cmd}" --gui --modorganizer "{abs_norm_path(self.mo_exe_path)}"'
         return None
 
 
