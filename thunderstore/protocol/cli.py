@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import os
 import subprocess
 import sys
 from collections.abc import Callable
@@ -17,9 +16,14 @@ from .utils import abs_norm_path
 MO_EXE = "ModOrganizer.exe"
 
 
-def get_mo_executable() -> Path:
-    # MO (MO_EXE)/plugins/thunderstore/protocol/__file__
-    return abs_norm_path(os.path.join(__file__, "../../../..", MO_EXE))
+def get_mo_executable() -> Path | None:
+    # MO (MO_EXE)/plugins/.../__file__
+    file_path = Path(__file__).absolute()
+    plugins = next((p for p in file_path.parents if p.name == "plugins"), None)
+    if not plugins:
+        return None
+    # normalize without resolving symlinks!
+    return abs_norm_path(plugins.parent / MO_EXE)
 
 
 parser = argparse.ArgumentParser(
