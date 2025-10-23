@@ -72,8 +72,13 @@ shell = """git archive ${ref} thunderstore \
     --add-file thunderstore/protocol/*.exe \
     --prefix= \
     -o ${output:-thunderstore-$(poetry version -s).zip}"""
-args.output = {options = ["-o", "--output"], help="default: thunderstore-${version}.zip"}
-args.ref = {default="HEAD"}
+args.output = {options = ["-o", "--output"], help="[default: thunderstore-$(poetry version -s).zip]"}
+args.ref = {default="HEAD", positional=true}
+
+[tool.poe.tasks.update-version]
+cmd = "python update_version.py -s ${version}"
+args.version = {positional=true, help="See: poetry version --help"}
+help = "Update project and plugin version"
 
 [tool.pyright]
 reportMissingModuleSource = false
