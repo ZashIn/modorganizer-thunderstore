@@ -37,7 +37,7 @@ format.sequence = ["format-imports", "format-ruff"]
 lint-ruff = "ruff check --extend-select I ."
 lint-ruff-format = "ruff format --check ."
 lint-pyright = "pyright ."
-lint-mypy = "mypy ."
+lint-mypy = "mypy . --exclude-gitignore"
 lint.sequence = ["lint-ruff", "lint-ruff-format", "lint-pyright", "lint-mypy"]
 lint.ignore_fail = "return_non_zero"
 
