@@ -8,15 +8,22 @@ Mod Organizer 2 plugin, adding [thunderstore.io](https://thunderstore.io/) websi
   - Set mod version and site link on mod installation (from package metadata).
   - Show missing dependencies (links).
   - Modify thunderstore package files (meta data), configurable via `package_file_action`.
+  - Runs also on Nexus archive installations, since many authors include Thunderstore package metadata there, too.
 - Thunderstore Mod Page (`IPluginModPage`):
   - Link to thunderstore community / game site (under 🌎).
 
 ## Installation
-Install/extract the `thunderstore` folder into MO's plugins directory.
+- Install/extract the `thunderstore` folder (from [Releases](https://github.com/ZashIn/modorganizer-thunderstore/releases)) into MO's plugins directory.
+
+### Requirements
+- Updated [basic_games plugins](https://github.com/ModOrganizer2/modorganizer-basic_games) for MO <2.5.2 Beta 3 (unreleased, see [PR](https://github.com/ModOrganizer2/modorganizer-basic_games/pull/199))
+- For the `ror2mm:` protocol handler:
+  - With installed Python 3.12+: the [Python script](thunderstore\protocol\cli.py) is used directly (source code / any MO version)
+  - Without Python installed: `thunderstore/protocol/thunderstore_protocol_handler_python*.exe` is included in release, matching MOs Python version.
 
 ## Settings
 Under `Setting/Plugins/Thunderstore`:
-- `thunderstore_community`: by default set by the game plugin (see below).
+- `thunderstore_community`: by default set by the game plugin (see [Add game support](#add-game-support) below).
 
 `Thunderstore Installer`:
 - `check_dependencies`: display missing dependencies (default: true).
@@ -24,7 +31,7 @@ Under `Setting/Plugins/Thunderstore`:
 
 ## Development info
 ### Protocol handler compilation
-To support Windows systems without a Python installation, a compiled Python handler (`thunderstore/protocol/cli.py`) is included, too.
+To support Windows systems without a Python installation, a compiled Python handler (`thunderstore/protocol/cli.py`) is also included, using MOs bundled `plugin_python` libs.
 
 Building `thunderstore/protocol/thunderstore_protocol_handler.exe`:
 - install [Nuitka requirements](https://nuitka.net/user-documentation/user-manual.html#requirements)
@@ -45,6 +52,15 @@ You can add thunderstore support to a game plugin ([`BasicGame`](https://github.
   organizer.setPluginSetting("Thunderstore" or game.name(), "thunderstore_community", "<community_name>")
   ```
 - Set the setting **manually** in MO under `Settings/Plugins/Plugin/Thunderstore/thunderstore_community` (and restart MO).
+
+The games `ModDataChecker` / `IPluginInstaller` should be configured together with the `package_file_action`, e.g.
+```py
+# Hide the Thunderstore package files (default)
+#organizer.setPluginSetting("Thunderstore Installer", "package_file_action", "hide")
+BasicModDataChecker(GlobPatterns(ignore=["*.mohidden"]))
+# Remove them
+organizer.setPluginSetting("Thunderstore Installer", "package_file_action", "remove")
+```
 
 ## Limitations
 Current [Mod Organizer API limitations](https://github.com/ModOrganizer2/modorganizer/issues/2286):
