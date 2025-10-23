@@ -42,15 +42,17 @@ lint.sequence = ["lint-ruff", "lint-ruff-format", "lint-pyright", "lint-mypy"]
 lint.ignore_fail = "return_non_zero"
 
 [tool.poe.tasks.build]
-help = "small thunderstore/protocol/thunderstore_protocol_handler.exe, requires matching Python version under MO/plugins/plugin_python/dlls"
+help = "small thunderstore/protocol/thunderstore_protocol_handler_*.exe, requires matching Python version under MO/plugins/plugin_python/dlls"
 shell = """python -m nuitka thunderstore/protocol \
     --mode=accelerated \
     --windows-console-mode=hide \
     --no-deployment-flag=self-execution \
     --output-dir=build \
-    --output-filename=thunderstore/protocol/thunderstore_protocol_handler.exe \
-    && python -c "import sys; open('thunderstore/protocol/.python-version', 'w').write('{}.{}'.format(*sys.version_info[:2]))"
-    """
+    --output-filename=thunderstore/protocol/thunderstore_protocol_handler_${PYTHON_VERSION}.exe"""
+uses = { PYTHON_VERSION = "_python-version"}
+
+[tool.poe.tasks._python-version]
+expr="'python{}{}'.format(*sys.version_info[:2])"
 
 [tool.poe.tasks.build-standalone]
 help = "MO independent exe, bundled with Python"
@@ -65,12 +67,13 @@ shell = """python -m nuitka thunderstore/protocol \
 
 [tool.poe.tasks.pack]
 help = "Pack the plugin, including compiled exe"
-shell = """git archive -o modorganizer-thunderstore.zip \
+shell = """git archive ${ref} thunderstore \
     --prefix=thunderstore/protocol/ \
     --add-file thunderstore/protocol/*.exe \
-    --add-file thunderstore/protocol/.python-version \
     --prefix= \
-    HEAD thunderstore"""
+    -o ${output:-thunderstore-$(poetry version -s).zip}"""
+args.output = {options = ["-o", "--output"], help="default: thunderstore-${version}.zip"}
+args.ref = {default="HEAD"}
 
 [tool.pyright]
 reportMissingModuleSource = false

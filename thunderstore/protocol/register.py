@@ -93,12 +93,15 @@ class PythonProtocolHandler(ProtocolHandler):
 @dataclass
 class ExeProtocolHandler(ProtocolHandler):
     mo_exe_path: Path
-    compiled_handler: Path = Path(__file__, "../thunderstore_protocol_handler.exe")
+    compiled_handler: Path = Path(__file__, "../thunderstore_protocol_handler*.exe")
+    """Supports globs in name."""
+    cmd_path_wrapper: Path = Path(__file__, "../thunderstore_protocol_handler.cmd")
 
     def get_handler_command(self) -> str | None:
-        if (exe := abs_norm_path(self.compiled_handler)).exists():
-            if (exe_cmd := exe.with_suffix(".cmd")).exists():
-                cmd = exe_cmd
+        pattern_path = abs_norm_path(self.compiled_handler)
+        if (exe := next(pattern_path.parent.glob(pattern_path.name), None)) is not None:
+            if self.cmd_path_wrapper.exists():
+                cmd = self.cmd_path_wrapper
             else:
                 cmd = exe
             return f'"{cmd}" --gui --modorganizer "{abs_norm_path(self.mo_exe_path)}"'
@@ -130,6 +133,6 @@ class ThunderstoreProtocolRegister(ProtocolRegister):
                 break
         else:
             raise FileNotFoundError(
-                "Cannot find protocol handler. Either install Python or compile the handler."
+                "Cannot find protocol handler. Either install Python or compile the handler matching MOs python version."
             )
         return f'{command} "%1"'
