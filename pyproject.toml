@@ -67,11 +67,7 @@ shell = """python -m nuitka thunderstore/protocol \
 
 [tool.poe.tasks.pack]
 help = "Pack the plugin, including compiled exe"
-shell = """git archive ${ref} thunderstore \
-    --prefix=thunderstore/protocol/ \
-    --add-file thunderstore/protocol/*.exe \
-    --prefix= \
-    -o ${output:-thunderstore-$(poetry version -s).zip}"""
+shell = "./pack-release.sh $ref $output"
 args.output = {options = ["-o", "--output"], help="[default: thunderstore-$(poetry version -s).zip]"}
 args.ref = {default="HEAD", positional=true}
 
